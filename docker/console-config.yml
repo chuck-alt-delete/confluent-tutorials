@@ -1,0 +1,16 @@
+organization:
+  name: Conduktor Demo Org
+database:
+  url: postgresql://postgres:pwd@postgres/postgres
+clusters:
+  - id: local-kafka-cluster
+    name: Local Kafka
+    color: '#0013E7'
+    bootstrapServers: 'broker:9092'
+    schemaRegistry:
+      id: local-sr
+      url: 'http://schema-registry:8081'
+
+admin:
+  email: admin@demo.dev
+  password: adminP4ss!

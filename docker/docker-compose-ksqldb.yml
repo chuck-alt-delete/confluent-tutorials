@@ -1,4 +1,55 @@
 services:
+  postgres:
+    image: postgres:14
+    restart: always
+    container_name: postgres
+    hostname: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: pwd
+
+  conduktor-console:
+    image: conduktor/conduktor-console:1.38.0
+    hostname: conduktor-console
+    container_name: conduktor-console
+    ports:
+      - 8080:8080
+    volumes:
+      - ${CDK_STACK:-.}/console-config.yml:/opt/conduktor/console-config.yaml
+    environment:
+      CDK_IN_CONF_FILE: /opt/conduktor/console-config.yaml
+      CDK_DEBUG: ${CDK_DEBUG:-false}
+      CDK_LICENSE: ${CDK_LICENSE:-}
+      CDK_MONITORING_CORTEX-URL: http://conduktor-monitoring:9009/
+      CDK_MONITORING_ALERT-MANAGER-URL: http://conduktor-monitoring:9010/
+      CDK_MONITORING_CALLBACK-URL: http://conduktor-console:8080/monitoring/api/
+      CDK_MONITORING_NOTIFICATIONS-CALLBACK-URL: http://localhost:8080
+      CDK_MONITORING_USEAGGREGATEDMETRICS: true
+      CDK_MONITORING_ENABLENONAGGREGATEDMETRICS: false
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl --fail http://localhost:8080/platform/api/modules/health/ready",
+        ]
+      interval: 10s
+      start_period: 120s # Leave time for the psql init scripts to run
+      timeout: 5s
+      retries: 3
+    depends_on:
+      postgres:
+        condition: service_started
+  
+  materialize:
+    image: materialize/materialized:v0.158.2
+    container_name: materialize
+    hostname: materialize
+    ports:
+      - 6874:6874
+      - 6875:6875
+      - 6876:6876
+
   broker:
     image: confluentinc/cp-kafka:7.7.1
     hostname: broker
